@@ -12,7 +12,7 @@ app.use(express.json());
 
 app.use('/courses', coursesRouter);
 
-app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', version: '1.0.0' }));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
