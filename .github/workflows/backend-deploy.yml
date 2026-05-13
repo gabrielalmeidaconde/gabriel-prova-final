@@ -20,9 +20,14 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/gabriel-prova-final/backend
+            cd /home/ubuntu/gabriel-prova-final
             git pull origin main
-            npm install --omit=dev
-            npx prisma generate
-            npx prisma db push
-            pm2 restart courses-api || pm2 start src/index.js --name courses-api
+            cd backend
+            sudo docker build -t courses-api .
+            sudo docker rm -f courses-api || true
+            sudo docker run -d \
+              --name courses-api \
+              --restart unless-stopped \
+              -p 3000:3000 \
+              --env-file /home/ubuntu/gabriel-prova-final/backend/.env \
+              courses-api
