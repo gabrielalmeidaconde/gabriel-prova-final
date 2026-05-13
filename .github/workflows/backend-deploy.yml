@@ -9,10 +9,20 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to Render
+    name: Deploy to EC2
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger Render Deploy Hook
-        run: |
-          curl --fail -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 18.231.251.174
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/gabriel-prova-final/backend
+            git pull origin main
+            npm install --omit=dev
+            npx prisma generate
+            npx prisma db push
+            pm2 restart courses-api || pm2 start src/index.js --name courses-api
