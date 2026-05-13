@@ -7,19 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// status: "DISPONIVEL" | "CANCELADO"
 model Course {
   id           String   @id @default(cuid())
   codigo       String   @unique
   nome         String
   instrutor    String
   dataCadastro DateTime @default(now())
-  status       Status   @default(DISPONIVEL)
+  status       String   @default("DISPONIVEL")
   adminEmail   String
 
   @@map("courses")
-}
-
-enum Status {
-  DISPONIVEL
-  CANCELADO
 }

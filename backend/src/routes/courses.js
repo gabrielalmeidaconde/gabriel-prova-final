@@ -5,6 +5,8 @@ const { checkJwt, checkRole } = require('../middleware/auth');
 const router = express.Router();
 const prisma = new PrismaClient();
 
+const Status = { DISPONIVEL: 'DISPONIVEL', CANCELADO: 'CANCELADO' };
+
 // GET /courses - ADMIN e USER
 router.get('/', checkJwt, async (_req, res) => {
   try {
@@ -19,10 +21,14 @@ router.get('/', checkJwt, async (_req, res) => {
 
 // POST /courses - apenas ADMIN
 router.post('/', checkJwt, checkRole('ADMIN'), async (req, res) => {
-  const { codigo, nome, instrutor } = req.body;
+  const { codigo, nome, instrutor, status } = req.body;
 
   if (!codigo || !nome || !instrutor) {
     return res.status(400).json({ error: 'Campos obrigatórios: codigo, nome, instrutor' });
+  }
+
+  if (status && !Object.values(Status).includes(status)) {
+    return res.status(400).json({ error: 'Status inválido. Use: DISPONIVEL ou CANCELADO' });
   }
 
   const adminEmail =
@@ -31,7 +37,7 @@ router.post('/', checkJwt, checkRole('ADMIN'), async (req, res) => {
 
   try {
     const course = await prisma.course.create({
-      data: { codigo, nome, instrutor, adminEmail },
+      data: { codigo, nome, instrutor, adminEmail, status: status || Status.DISPONIVEL },
     });
     res.status(201).json(course);
   } catch (error) {
