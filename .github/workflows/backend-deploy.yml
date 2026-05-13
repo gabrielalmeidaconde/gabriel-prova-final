@@ -1,16 +1,16 @@
-name: Deploy Backend
+name: Deploy
 
 on:
   push:
     branches:
       - main
-    paths:
-      - 'backend/**'
 
 jobs:
-  deploy:
-    name: Deploy to EC2
+  deploy-backend:
+    name: Deploy Backend
     runs-on: ubuntu-latest
+    if: |
+      contains(toJson(github.event.commits), 'backend/')
 
     steps:
       - name: Deploy via SSH
@@ -31,3 +31,31 @@ jobs:
               -p 3000:3000 \
               --env-file /home/ubuntu/gabriel-prova-final/backend/.env \
               courses-api
+
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 18.231.251.174
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/gabriel-prova-final
+            git pull origin main
+            cd frontend
+            sudo docker build \
+              --build-arg VITE_AUTH0_DOMAIN=dev-wu34pp41bwi2w0q8.us.auth0.com \
+              --build-arg VITE_AUTH0_CLIENT_ID=KzEMbGj653BIOnJ5pnY1etdJbglXPa3z \
+              --build-arg VITE_AUTH0_AUDIENCE=https://courses-api \
+              --build-arg VITE_API_URL=http://18.231.251.174 \
+              -t courses-frontend .
+            sudo docker rm -f courses-frontend caddy || true
+            sudo docker run -d \
+              --name courses-frontend \
+              --restart unless-stopped \
+              --network host \
+              courses-frontend
