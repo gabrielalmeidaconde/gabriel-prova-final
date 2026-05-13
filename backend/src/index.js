@@ -5,8 +5,20 @@ const coursesRouter = require('./routes/courses');
 
 const app = express();
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'https://gabriel-prova-final.vercel.app',
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.some((o) => origin.startsWith(o.replace(/\/$/, '')))) {
+      cb(null, true);
+    } else {
+      cb(new Error('CORS não permitido'));
+    }
+  },
 }));
 app.use(express.json());
 
